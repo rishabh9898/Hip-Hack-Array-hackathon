@@ -1,4 +1,11 @@
 from django import forms
+from .models import Reader
+from django.core import validators
 
-class NameForm(forms.Form):
-    your_name = forms.CharField(label='Your name', max_length=100)
+class CreateForm(forms.ModelForm):
+   export_to_CSV = forms.BooleanField(required=False)
+   class Meta:
+     model = Reader
+     fields = ['search','name','amount','pub_date']
+# 	email=forms.CharField(error_messages={'required':'Enter your email'})
+# 	password= forms.CharField(widget=forms.PasswordInput,error_messages={'required':'Enter your password'})

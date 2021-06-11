@@ -1,4 +1,5 @@
 {% load static %}
+{% load crispy_forms_filters %}
 <!DOCTYPE HTML>
 <html>
 	<head>
@@ -56,7 +57,7 @@
 							<br>
 							<br>
 							<footer>
-								<a href="#searchtool" class="button scrolly">Let's get started!</a>
+								<a href='pdfreader/search.html' class="button scrolly">Let's get started!</a>
 							</footer>
 							<p>					
 								<br>
@@ -68,20 +69,13 @@
 
 				<!-- Search Tool -->
 					<section id="searchtool" class="searchpage">
-						<div class="container">
-							
-							<header>provide a brief one liner about your research. </header>
+					
 							<div class="topnav">
 							
-							<form action="/#top/" method="post">
-    						{% csrf_token %}
-						    {{ form }}
-						    <input type="submit" value="Submit">
-							</form>
-							</form>
+							</div>
 							<!-- <input type="text" placeholder="Search.."> -->
 							
-							</div>
+							
 							<p>					
 								<br>
 								<br>
@@ -145,13 +139,13 @@
 							<div class="row">
 								<div class="col-4 col-12-mobile">
 									<article class="item">
-										<a href="#" class="image fit"><img src='images/pic02.jpg' alt="" /></a>
+										<a href="#" class="image fit"><img src="images/pic02.jpg" alt="" /></a>
 										<header>
 											<h3>Ipsum Feugiat</h3>
 										</header>
 									</article>
 									<article class="item">
-										<a href="#" class="image fit"><img src='images/pic03.jpg' alt="" /></a>
+										<a href="#" class="image fit"><img src="images/pic03.jpg" alt="" /></a>
 										<header>
 											<h3>Rhoncus Semper</h3>
 										</header>
