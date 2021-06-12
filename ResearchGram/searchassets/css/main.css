@@ -1089,7 +1089,7 @@ FIELD
 */
 
 .field__input{ 
-	--uiFieldPlaceholderColor: var(--fieldPlaceholderColor, #767676);
+	--uiFieldPlaceholderColor: var(--fieldPlaceholderColor, #ffffff);
 	
 	background-color: transparent;
 	border-radius: 0;
@@ -1277,4 +1277,18 @@ FIELD
   
 	display: grid;
 	grid-gap: 30px;
+  }
+
+  form {
+	position: relative;
+	width: 250px;
+	margin: 0 auto;
+	background: rgba(255, 255, 255, 0.3);
+	background-color: transparent;
+	padding: 20px 22px;
+	border: 1px solid;
+	border-top-color: transparent;
+	border-left-color: transparent;
+	border-bottom-color: transparent;
+	border-right-color: transparent;
   }
