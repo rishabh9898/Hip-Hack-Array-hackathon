@@ -84,5 +84,6 @@ def search_papers(title,model,corpus_embeddings,papers,df):  #consider adding re
 	 #context_dict['Similarity'] = str(format(search_hits[count-1]['score'],".2f"))
 	 #context_dict['Organization'] = str(k[0][1])
 	 #data_dict['Paper'+str(count)] = context_dict
+   #data_dict['count'] = count
    #return render(request, 'pdfreader/results.html', data_dict) #path 'pdfreader/results.html' is not made yet, need to make the template to accept data
 
