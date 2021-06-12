@@ -62,13 +62,15 @@ def add_items(request):
 
 charities = []
 
-def search_papers(title,model,corpus_embeddings,papers,df):
+def search_papers(title,model,corpus_embeddings,papers,df):  #consider adding request parameter here
+   #data_dict = {} # this is the means through which the data is sent to the result template html 
    query_embedding = model.encode('[CLS]'+title+'[SEP]', convert_to_tensor=True) # Converts to tensor
    search_hits = util.semantic_search(query_embedding, corpus_embeddings)
    search_hits = search_hits[0]
    count = 0
 
    for hit in search_hits:
+	 #context_dict = {}
          related_paper = papers[hit['corpus_id']]
          count += 1
          print(str(count)+ ")" + " Description of charity : " +related_paper)
@@ -78,4 +80,9 @@ def search_papers(title,model,corpus_embeddings,papers,df):
          a_string = "Name of Organization"
          print("\033[1m" + a_string + "\033[0m")
          print(str(k[0][1]))
+	 #context_dict['Description'] = related_paper
+	 #context_dict['Similarity'] = str(format(search_hits[count-1]['score'],".2f"))
+	 #context_dict['Organization'] = str(k[0][1])
+	 #data_dict['Paper'+str(count)] = context_dict
+   #return render(request, 'pdfreader/results.html', data_dict) #path 'pdfreader/results.html' is not made yet, need to make the template to accept data
 
