@@ -1292,3 +1292,41 @@ FIELD
 	border-bottom-color: transparent;
 	border-right-color: transparent;
   }
+  button {
+	border: 0;
+	padding: 20px 40px;
+	background-color: transparent;
+	border-radius: 10px;  
+	color: #fff;
+  }
+  button:focus {
+	background-color: transparent;
+  }
+  .button-container {
+	position: relative;
+	display: inline-block;
+	background-color: transparent;
+	border-radius: 10px;
+  }
+  .button-container:hover {
+	background-color: transparent;
+  }
+  #custom-button {
+	padding: 10px;
+	color: white;
+	background-color: transparent;
+	border: 1px solid transparent;
+	border-radius: 5px;
+	cursor: pointer;
+  }
+  
+  #custom-button:hover {
+	background-color: transparent;
+  }
+  
+  #custom-text {
+	margin-left: 10px;
+	font-family: sans-serif;
+	color: rgb(247, 223, 223);
+  }
+  
