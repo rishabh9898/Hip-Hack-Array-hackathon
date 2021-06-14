@@ -12,6 +12,9 @@ import torch
 from sentence_transformers import util
 
 
+#Define paper data class somewhere
+
+
 def index(request):
 	return render(request,'pdfreader/landing.html')
 
