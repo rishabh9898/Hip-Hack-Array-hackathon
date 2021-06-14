@@ -13,6 +13,14 @@ from sentence_transformers import util
 
 
 #Define paper data class somewhere
+#Class Paper_Data:
+#	string description
+#	string similarity
+#	string organization
+#	def __init__(self, description, similarity, organization):
+#		self.description = description
+#		self.similarity = similarity
+#		self.organization = organization
 
 
 def index(request):
@@ -66,7 +74,7 @@ def add_items(request):
 charities = []
 
 def search_papers(title,model,corpus_embeddings,papers,df):  #consider adding request parameter here
-   #data_dict = {} # this is the means through which the data is sent to the result template html 
+   #data_dict = {} # this is the means through which the data is sent to the result template html #definitely need to convert this into a classs
    query_embedding = model.encode('[CLS]'+title+'[SEP]', convert_to_tensor=True) # Converts to tensor
    search_hits = util.semantic_search(query_embedding, corpus_embeddings)
    search_hits = search_hits[0]
