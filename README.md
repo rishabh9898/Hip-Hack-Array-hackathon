@@ -6,4 +6,7 @@ pip install django-import-export
 pip install django-embed-video
 pip install pdfreader
 pip install django
+pip install torchvision
+pip install sentence-transformers
+
 
