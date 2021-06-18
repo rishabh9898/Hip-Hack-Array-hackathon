@@ -15,6 +15,13 @@ import os
 from PyPDF2 import PdfFileReader
 import json
 import re,string
+from google.cloud import vision
+import io 
+import subprocess
+from ibm_watson import SpeechToTextV1
+from ibm_watson.websocket import RecognizeCallback, AudioSource
+from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+
 
 
 #Define paper data class somewhere
@@ -80,56 +87,105 @@ def preprocess (text):
   text=re.sub(' +', ' ', text)
   return text
 
+def model_reader(text):
+	with open("pdfreader/paper_model","rb") as f:
+					model = pickle.load(f)
+	with open('pdfreader/bert_summary_model',"rb") as fi:
+		model_1= pickle.load(fi)
+
+	bert_summary = ''.join(model_1(text, min_length=60))
+	dataset_file = 'emnlp2016-2018.json'
+
+	if not os.path.exists(dataset_file):
+		util.http_get("https://sbert.net/datasets/emnlp2016-2018.json", dataset_file)
+
+	with open(dataset_file) as fIn:
+		papers = json.load(fIn)
+
+	title = bert_summary
+	corpus_embeddings = torch.load('pdfreader/tensor_research_papers.pt')
+	context = search_papers(title=title,model= model,corpus_embeddings=corpus_embeddings,papers = papers)
+	context['summary'] = title
+	return context
+
+
 def add_items(request):
 	if request.method =='POST':
 		form = CreateForm(request.POST, request.FILES)
 		if form.is_valid():
-			f1 = request.FILES['file1']
-			pdf = PyPDF2.PdfFileReader(f1)
-			num_pages= pdf.getNumPages()
-			text=''
-			for i in range(num_pages):
-				page=pdf.getPage(i)
-				text=text+page.extractText()
-			text = preprocess(text)
-			print(text)
+			f1 = request.FILES['PDF']
+			# print(type(f1['PDF']))
+			# print("RESULT IS HERE !!!!!",  f1['PDF'])
+			sentence = str(f1)
+			file=sentence.rsplit('.', 1)
+			file_type=file[1]
+			# print(f1['PDF'])
+			# print(type(f1['PDF']))
+			print(file_type)
+			# ff1 = f1['PDF']
 
-			# name = form.cleaned_data['name']
-			search = form.cleaned_data['search']
-
-			form.save()
-			print(search)
-
-			# model = pickle.load(open('model_pickle','rb'))
-
-			with open("pdfreader/paper_model","rb") as f:
-				model = pickle.load(f)
-
-			with open("D:\\GITHUB\\rishabh9898\\hackathon-HipHack\\Backend\\App\\hiphack\\pdfreader\\bert_summary_model","rb") as fi:
-				model_1= pickle.load(fi)
-
-			bert_summary = ''.join(model_1(text, min_length=60))
-
-			print(bert_summary)
-
-			# df = pd.read_csv('D:\\GITHUB\\rishabh9898\\hackathon-HipHack\\Backend\\App\\hiphack\\pdfreader\\')
-			dataset_file = 'emnlp2016-2018.json'
-
-			if not os.path.exists(dataset_file):
-				util.http_get("https://sbert.net/datasets/emnlp2016-2018.json", dataset_file)
-			with open(dataset_file) as fIn:
-				papers = json.load(fIn)
-
-			title = bert_summary
-
-			corpus_embeddings = torch.load("D:\\GITHUB\\rishabh9898\\hackathon-HipHack\\Backend\\App\\hiphack\\pdfreader\\tensor_research_papers.pt")
-			context = search_papers(title=title,model= model,corpus_embeddings=corpus_embeddings,papers = papers)
-			print("rendering new page....")
-			return render(request,'pdfreader/results.html',context)
+			if ((file_type.lower()=="jpg") or (file_type.lower()=="jpeg") or (file_type.lower()=="png")):
+				print("1")
+				os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'pdfreader/seismic-diorama-316110-5569927e0d86.json'
+				client = vision.ImageAnnotatorClient()
 
 
-		# form = CreateForm(request.POST)
-		
+				# open(f1['PDF'] ,'rb') as image_file:
+
+				content = f1.read()
+
+				image = vision.Image(content=content)
+				response = client.document_text_detection(image=image)
+
+				docText = response.full_text_annotation.text
+				print(docText)
+				print("rendering new page....")
+				return render(request,'pdfreader/results.html',model_reader(docText))
+
+
+
+
+			elif file_type.lower() =="pdf":
+				print("2")
+				pdf = PyPDF2.PdfFileReader(f1)
+				num_pages= pdf.getNumPages()
+				text=''
+				for i in range(num_pages):
+					page=pdf.getPage(i)
+					text=text+page.extractText()
+				text = preprocess(text)
+				print("rendering new page....")
+				return render(request,'pdfreader/results.html',model_reader(text))
+
+
+
+			elif file_type.lower() =="mp3":
+				print("3")
+				apikey = 'mUFzo-xMwW8Ix-J1GSFreZ-gFMGEpvjafNLkAQN0WCoH'
+				url = 'https://api.us-south.speech-to-text.watson.cloud.ibm.com/instances/35437128-dcf1-4cc7-946c-c4d4b608ba4b'
+				authenticator = IAMAuthenticator(apikey)
+				stt = SpeechToTextV1(authenticator=authenticator)
+				stt.set_service_url(url)
+
+				authenticator = IAMAuthenticator(apikey)
+				stt = SpeechToTextV1(authenticator=authenticator)
+				stt.set_service_url(url)
+				# with open("D:\\GITHUB\\rishabh9898\\hackathon-HipHack\\Backend\\App\\hiphack\\pdfreader\\nlp.mp3", 'rb') as f:
+				res = stt.recognize(audio=f1, content_type='audio/mp3', model='en-AU_NarrowbandModel', continuous=True).get_result()
+				text = [result['alternatives'][0]['transcript'].rstrip() + '.\n' for result in res['results']]
+				text = [para[0].title() + para[1:] for para in text]
+				transcript = ''.join(text)
+				with open('output.txt', 'w') as out:
+				    out.writelines(transcript)
+				# print(transcript)
+
+				
+				print("rendering new page....")
+				return render(request,'pdfreader/results.html',model_reader(transcript))
+
+			else :
+				return render(request,'pdfreader/error.html')
+
 
 	form = CreateForm()
 	print(" rendering same page...")
