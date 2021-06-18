@@ -2,10 +2,10 @@ from django import forms
 from .models import Reader
 from django.core import validators
 
-class CreateForm(forms.ModelForm):
-	file1 = forms.FileField(widget=forms.FileInput(attrs={'class': 'file1class'}))
-	class Meta:
-		model = Reader
-		fields = ['search','file1']
-# 	email=forms.CharField(error_messages={'required':'Enter your email'})
-# 	password= forms.CharField(widget=forms.PasswordInput,error_messages={'required':'Enter your password'})
+class CreateForm(forms.Form):
+	PDF = forms.FileField(widget=forms.FileInput(attrs={'class': 'pdfclass'}))
+	# image = forms.FileField(widget=forms.FileInput(attrs={'class': 'imageclass'}))
+	# video = forms.FileField(widget=forms.FileInput(attrs={'class': 'videoclass'}))
+	fields = ['PDF','image','video']
+
+# 3 minutes to load
