@@ -10,6 +10,7 @@ from embed_video.fields import EmbedVideoField
 # Create your models here.
 
 class Reader(models.Model):
+	# file1 = models.FileField("Upload PDF file 1")
 	search = models.CharField("provide a brief one liner about your research.",max_length=50, blank=True, null=True)
 	# pub_date = models.DateTimeField('date published')
 	email=models.EmailField(max_length=200)
