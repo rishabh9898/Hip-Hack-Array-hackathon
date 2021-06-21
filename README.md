@@ -14,6 +14,8 @@ based on the input provided by the user (input can be provided in various image,
 
 ![image](https://user-images.githubusercontent.com/59512700/122825559-573a3e80-d29f-11eb-91be-e7ebc2e9dfb2.png)
 
+![result](https://user-images.githubusercontent.com/59512700/122825859-bac46c00-d29f-11eb-9c2a-0ba85a66daea.jpg)
+
 
 ## 3) Inspiration ?
 
