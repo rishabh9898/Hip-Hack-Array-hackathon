@@ -21,10 +21,12 @@ import subprocess
 from ibm_watson import SpeechToTextV1
 from ibm_watson.websocket import RecognizeCallback, AudioSource
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+import moviepy.editor as mp
+import tempfile
 
 
 
-#Define paper data class somewhere
+# Class defined which holds attributes of the input provided by the users
 class Paper_Data:
 	description = ""
 	similarity = ""
@@ -38,20 +40,23 @@ class Paper_Data:
 		self.url = url
 		self.count = count
 
+# Opens the home page 
 
 def index(request):
 	return render(request,'pdfreader/landing.html')
 
+
 charities = []
 
-def search_papers(title,model,corpus_embeddings,papers):
-  query_embedding = model.encode(title+'[SEP]', convert_to_tensor=True)
 
-  data_dict = {}
+def search_papers(title,model,corpus_embeddings,papers):
+  query_embedding = model.encode(title+'[SEP]', convert_to_tensor=True)  # Converts input data to tensors
+
+  data_dict = {}   # Creating a dictionary to be passed to the html page
 
   count = 0
 
-  search_hits = util.semantic_search(query_embedding, corpus_embeddings)
+  search_hits = util.semantic_search(query_embedding, corpus_embeddings)  #
   search_hits = search_hits[0]  #Get the hits for the first query
   paper_list = []
   match_list =[]
@@ -64,7 +69,7 @@ def search_papers(title,model,corpus_embeddings,papers):
   	print(str(count)+". "+related_paper['title'])
   	# print(related_paper['abstract'])
   	# print(related_paper['url']+".pdf")
-  	x = Paper_Data(related_paper['abstract'],str(format(search_hits[count-1]['score'],".2f")),related_paper['title'],related_paper['url']+".pdf",str(count))
+  	x = Paper_Data(related_paper['abstract'],str(100*float(format(search_hits[count-1]['score'],".2f"))),related_paper['title'],related_paper['url']+".pdf",str(count))
   	if count<4:
   		match_list.append(x)
   	else:
@@ -114,6 +119,7 @@ def add_items(request):
 		form = CreateForm(request.POST, request.FILES)
 		if form.is_valid():
 			f1 = request.FILES['PDF']
+			print(type(f1))
 			# print(type(f1['PDF']))
 			# print("RESULT IS HERE !!!!!",  f1['PDF'])
 			sentence = str(f1)
@@ -154,22 +160,57 @@ def add_items(request):
 					page=pdf.getPage(i)
 					text=text+page.extractText()
 				text = preprocess(text)
+				name = "Refrences"
+				ri = text.find(name)
+				text = text[:ri]
+				text.find("Refrences")
 				print("rendering new page....")
 				return render(request,'pdfreader/results.html',model_reader(text))
 
 
 
-			elif file_type.lower() =="mp3":
+			elif (file_type.lower() =="mp3" or file_type.lower() =="mp4") :
 				print("3")
 				apikey = 'mUFzo-xMwW8Ix-J1GSFreZ-gFMGEpvjafNLkAQN0WCoH'
 				url = 'https://api.us-south.speech-to-text.watson.cloud.ibm.com/instances/35437128-dcf1-4cc7-946c-c4d4b608ba4b'
 				authenticator = IAMAuthenticator(apikey)
 				stt = SpeechToTextV1(authenticator=authenticator)
 				stt.set_service_url(url)
+				print("Second time ",type(f1))
 
 				authenticator = IAMAuthenticator(apikey)
 				stt = SpeechToTextV1(authenticator=authenticator)
 				stt.set_service_url(url)
+
+				if file_type.lower() =="mp4":
+					transcript =""
+					with tempfile.TemporaryDirectory() as tmpdirname:
+						video = mp.VideoFileClip(f1.temporary_file_path())
+						video.audio.write_audiofile(str(tmpdirname) + '\\output.mp3')
+						with open(str(tmpdirname) + '\\output.mp3', 'rb') as fin:
+							res = stt.recognize(audio=fin, content_type='audio/mp3', model='en-AU_NarrowbandModel', continuous=True).get_result()
+							text = [result['alternatives'][0]['transcript'].rstrip() + '.\n' for result in res['results']]
+							text = [para[0].title() + para[1:] for para in text]
+							transcript = ''.join(text)
+							with open('output.txt', 'w') as out:
+							    out.writelines(transcript)
+							    print(transcript)
+							# print(transcript)
+
+							
+					print("rendering new page....")
+					return render(request,'pdfreader/results.html',model_reader(transcript))
+
+
+					# fp = tempfile.TemporaryFile()
+					# # print(f1.temporary_file_path())
+					
+					# f1 = video.audio
+					# fp.write(b(f1))
+
+				# authenticator = IAMAuthenticator(apikey)
+				# stt = SpeechToTextV1(authenticator=authenticator)
+				# stt.set_service_url(url)
 				# with open("D:\\GITHUB\\rishabh9898\\hackathon-HipHack\\Backend\\App\\hiphack\\pdfreader\\nlp.mp3", 'rb') as f:
 				res = stt.recognize(audio=f1, content_type='audio/mp3', model='en-AU_NarrowbandModel', continuous=True).get_result()
 				text = [result['alternatives'][0]['transcript'].rstrip() + '.\n' for result in res['results']]
@@ -184,14 +225,9 @@ def add_items(request):
 				return render(request,'pdfreader/results.html',model_reader(transcript))
 
 			else :
-				return render(request,'pdfreader/error.html')
+				return render(request,'pdfreader/404.html')
 
 
 	form = CreateForm()
 	print(" rendering same page...")
 	return render(request,'pdfreader/search.html',{'form':form})
-
-
-
-
-
