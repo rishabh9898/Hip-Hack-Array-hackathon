@@ -1,4 +1,4 @@
-# ResearchGram
+# ResearchGram (1st Place)
 
 ![image](https://media3.giphy.com/media/cLNVpwFasrCB5jbQVp/giphy.gif?cid=6c09b952ty35i4pzgrpyst5shgt6n9viz4w6iymxy86xjeb2&rid=giphy.gif&ct=s)
 
