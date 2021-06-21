@@ -1,5 +1,7 @@
 # ResearchGram
 
+![image](https://media3.giphy.com/media/cLNVpwFasrCB5jbQVp/giphy.gif?cid=6c09b952ty35i4pzgrpyst5shgt6n9viz4w6iymxy86xjeb2&rid=giphy.gif&ct=s)
+
 ## 1) What It does?
 
 ResearchGram is a AI based tool that leverages Machine Learning, NLP and cloud computing 
