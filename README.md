@@ -53,6 +53,7 @@ obstacles faced during research. These challenged paved way for our project.
 
   • HTML5 •CSS3 •SCSS •Python 
   • Django •JS •JupyterNotebook
+  •PowerShell
 
 ## 8) API's used :
 
