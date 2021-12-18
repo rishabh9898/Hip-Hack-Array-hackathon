@@ -1,4 +1,5 @@
 <div align="center"><img src="https://readme-typing-svg.herokuapp.com?font=&color=3393FF&size=40&width=170&height=50&lines=ResearchGram](https://git.io/typing-svg" /></div>
+<div align="center"><img src="https://readme-typing-svg.herokuapp.com?font=&color=3393FF&size=40&width=170&height=50&lines=Gram](https://git.io/typing-svg" /></div>
 
 ![image](https://media3.giphy.com/media/cLNVpwFasrCB5jbQVp/giphy.gif?cid=6c09b952ty35i4pzgrpyst5shgt6n9viz4w6iymxy86xjeb2&rid=giphy.gif&ct=s)
 
