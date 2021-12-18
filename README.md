@@ -1,4 +1,7 @@
 # ResearchGram (1st Place)
+![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green)
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 
 ![image](https://media3.giphy.com/media/cLNVpwFasrCB5jbQVp/giphy.gif?cid=6c09b952ty35i4pzgrpyst5shgt6n9viz4w6iymxy86xjeb2&rid=giphy.gif&ct=s)
 
