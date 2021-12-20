@@ -1,10 +1,9 @@
 
-[![Typing SVG](https://readme-typing-svg.herokuapp.com?color=%234EA2F7&size=46&center=true&vCenter=true&multiline=true&lines=ResearchGram;(1st+Prize))](https://git.io/typing-svg)
+[![Typing SVG](https://readme-typing-svg.herokuapp.com?color=%234EA2F7&size=46&center=true&vCenter=true&multiline=true&width=470&height=200&lines=ResearchGram;(1st+Prize))](https://git.io/typing-svg)
 
 
 
 
--
 ![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green)
 ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
