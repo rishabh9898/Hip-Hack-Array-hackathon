@@ -1,9 +1,9 @@
-<div align="center"><img src="https://readme-typing-svg.herokuapp.com?color=%234EA2F7&size=50&center=true&vCenter=true&multiline=true&width=470&height=150&lines=ResearchGram;(1st+Prize)"](https://git.io/typing-svg) /></div>
+
 
 ![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green)
 ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-![Googlecloud](https://img.shields.io/badge/Google_Cloud-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white)
+
 
 ![image](https://media3.giphy.com/media/cLNVpwFasrCB5jbQVp/giphy.gif?cid=6c09b952ty35i4pzgrpyst5shgt6n9viz4w6iymxy86xjeb2&rid=giphy.gif&ct=s)
 
