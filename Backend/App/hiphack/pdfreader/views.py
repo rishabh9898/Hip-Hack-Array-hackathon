@@ -1,233 +1,179 @@
-from django.http import HttpResponse
-from django.shortcuts import render
-from django import forms
-from django.contrib.admin.widgets import AdminDateWidget, AdminTimeWidget, AdminSplitDateTime
-from django.contrib.auth.models import User
-import csv
-from django.shortcuts import render, redirect
-from .forms import CreateForm
-import pickle
-import pandas as pd
-import torch
-from sentence_transformers import util
-import PyPDF2
+from flask import Flask, request, jsonify, make_response, send_from_directory, send_file
 import os
-from PyPDF2 import PdfFileReader
+from flask_mysqldb import MySQL
+from flask_cors import CORS
+from werkzeug.utils import send_from_directory
+import PyPDF2
+from sentence_transformers import SentenceTransformer, util
+import string
+import re
+import pickle
 import json
-import re,string
-from google.cloud import vision
-import io 
-import subprocess
+import torch
 from ibm_watson import SpeechToTextV1
 from ibm_watson.websocket import RecognizeCallback, AudioSource
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-import moviepy.editor as mp
 import tempfile
+import moviepy.editor as mp
+from google.cloud import vision
 
+"""
+app = Flask(__name__)
 
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = ''
+app.config['MYSQL_DB'] = 'sweseek'
+app.config['SECRET_KEY'] = 'MySecretKey'
+app.config["CLIENT_pdfs"] = "C:/Users/Nick/Desktop/University/CPSC471/Project/SWESeek/backendPython/resumeStorage"
 
-# Class defined which holds attributes of the input provided by the users
-class Paper_Data:
-	description = ""
-	similarity = ""
-	organization = ""
-	url = ""
-	count = ""
-	def __init__(self, description, similarity, organization,url,count):
-		self.description = description
-		self.similarity = similarity
-		self.organization = organization
-		self.url = url
-		self.count = count
+CORS(app)
+mysql = MySQL(app)
+"""
 
-# Opens the home page 
-
-def index(request):
-	return render(request,'pdfreader/landing.html')
-
-
-charities = []
+def preprocess (text):
+      str_punctuation=string.punctuation.replace('.','')
+      text=text.lower()
+      text = re.sub(r'^https?://.[\r\n]', '', text, flags=re.MULTILINE)
+      #text = text.translate(str.maketrans('', '', str_punctuation))
+      text=" ".join(filter(lambda x:x[0]!='[', text.split()))
+      text = text.replace('\n','')
+      text= text.replace('\t','')
+      text=re.sub(' +', ' ', text)
+      return text
 
 
 def search_papers(title,model,corpus_embeddings,papers):
-  query_embedding = model.encode(title+'[SEP]', convert_to_tensor=True)  # Converts input data to tensors
 
-  data_dict = {}   # Creating a dictionary to be passed to the html page
+    query_embedding = model.encode(title + '[SEP]', convert_to_tensor=True)
+    search_hits = util.semantic_search(query_embedding, corpus_embeddings)
+    search_hits = search_hits[0]  # Get the hits for the first query
+    result = []
 
-  count = 0
+    #print("Query:", title)
+    #print("\nMost similar papers:")
 
-  search_hits = util.semantic_search(query_embedding, corpus_embeddings)  #
-  search_hits = search_hits[0]  #Get the hits for the first query
-  paper_list = []
-  match_list =[]
+    for hit in search_hits:
 
-  # print("Query:", title)
-  # print("\nMost similar papers:")
-  for hit in search_hits:
-  	count+=1
-  	related_paper = papers[hit['corpus_id']]
-  	print(str(count)+". "+related_paper['title'])
-  	# print(related_paper['abstract'])
-  	# print(related_paper['url']+".pdf")
-  	x = Paper_Data(related_paper['abstract'],str(100*float(format(search_hits[count-1]['score'],".2f"))),related_paper['title'],related_paper['url']+".pdf",str(count))
-  	if count<4:
-  		match_list.append(x)
-  	else:
-  		paper_list.append(x)
-  data_dict['paper_list'] = paper_list
-  data_dict['match_list'] = match_list
+        related_paper = papers[hit['corpus_id']]
+        result.append({'title': related_paper['title'], 'abstract': related_paper['abstract'], 'url': related_paper['url']})
 
-  print(len(match_list),len(paper_list))
-  return data_dict
-
-
-def preprocess (text):
-  str_punctuation=string.punctuation.replace('.','')
-  text=text.lower()
-  text = re.sub(r'^https?://.[\r\n]', '', text, flags=re.MULTILINE)
-  #text = text.translate(str.maketrans('', '', str_punctuation))
-  text=" ".join(filter(lambda x:x[0]!='[', text.split()))
-  text = text.replace('\n','')
-  text= text.replace('\t','')
-  text=re.sub(' +', ' ', text)
-  return text
+    return result
 
 def model_reader(text):
-	with open("pdfreader/paper_model","rb") as f:
-					model = pickle.load(f)
-	with open('pdfreader/bert_summary_model',"rb") as fi:
-		model_1= pickle.load(fi)
 
-	bert_summary = ''.join(model_1(text, min_length=60))
-	dataset_file = 'emnlp2016-2018.json'
+    with open("specter.sav", "rb") as f:
+        model = pickle.load(f)
 
-	if not os.path.exists(dataset_file):
-		util.http_get("https://sbert.net/datasets/emnlp2016-2018.json", dataset_file)
+    with open('bert_summary_model.sav', "rb") as fi:
+        model_1 = pickle.load(fi)
 
-	with open(dataset_file) as fIn:
-		papers = json.load(fIn)
+    bert_summary = ''.join(model_1(text, min_length=60))
+    dataset_file = 'emnlp2016-2018.json'  # all papers dataset
 
-	title = bert_summary
-	corpus_embeddings = torch.load('pdfreader/tensor_research_papers.pt')
-	context = search_papers(title=title,model= model,corpus_embeddings=corpus_embeddings,papers = papers)
-	context['summary'] = title
-	return context
+    if not os.path.exists(dataset_file):
+        util.http_get("https://sbert.net/datasets/emnlp2016-2018.json", dataset_file)
 
+    with open(dataset_file) as fIn:
+        papers = json.load(fIn)
 
-def add_items(request):
-	if request.method =='POST':
-		form = CreateForm(request.POST, request.FILES)
-		if form.is_valid():
-			f1 = request.FILES['PDF']
-			print(type(f1))
-			# print(type(f1['PDF']))
-			# print("RESULT IS HERE !!!!!",  f1['PDF'])
-			sentence = str(f1)
-			file=sentence.rsplit('.', 1)
-			file_type=file[1]
-			# print(f1['PDF'])
-			# print(type(f1['PDF']))
-			print(file_type)
-			# ff1 = f1['PDF']
+    title = bert_summary  # input to specter (Paper summary)
+    corpus_embeddings = torch.load('tensor_research_papers.pt')
+    context = search_papers(title=title, model=model, corpus_embeddings=corpus_embeddings, papers=papers)
 
-			if ((file_type.lower()=="jpg") or (file_type.lower()=="jpeg") or (file_type.lower()=="png")):
-				print("1")
-				os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'pdfreader/seismic-diorama-316110-5569927e0d86.json'
-				client = vision.ImageAnnotatorClient()
+    result = {'summary': bert_summary, 'all_papers_details': context}
+    return result
 
+#@app.route('/api/signup', methods=['POST'])
+def machinelearning():
 
-				# open(f1['PDF'] ,'rb') as image_file:
+    path = "nlp_video.mp4"
+    #path = request.json['path']
+    file_type = path.split('.',1)
 
-				content = f1.read()
+    if ((file_type[1].lower() == "jpg") or (file_type[1].lower() == "jpeg") or (file_type[1].lower() == "png")):
 
-				image = vision.Image(content=content)
-				response = client.document_text_detection(image=image)
+        print("1")
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'data-cycle-341817-e8ec2ea6c8ca.json'
+        client = vision.ImageAnnotatorClient()
 
-				docText = response.full_text_annotation.text
-				print(docText)
-				print("rendering new page....")
-				return render(request,'pdfreader/results.html',model_reader(docText))
+        file = open(path ,'rb')
+        content = file.read() # read the entire file
 
+        image = vision.Image(content=content)
+        response = client.document_text_detection(image=image)
+        docText = response.full_text_annotation.text
 
+        print(docText)
 
+        result = model_reader(docText)
+        #return jsonify({'text': docText})
 
-			elif file_type.lower() =="pdf":
-				print("2")
-				pdf = PyPDF2.PdfFileReader(f1)
-				num_pages= pdf.getNumPages()
-				text=''
-				for i in range(num_pages):
-					page=pdf.getPage(i)
-					text=text+page.extractText()
-				text = preprocess(text)
-				name = "Refrences"
-				ri = text.find(name)
-				text = text[:ri]
-				text.find("Refrences")
-				print("rendering new page....")
-				return render(request,'pdfreader/results.html',model_reader(text))
+        print(result)
 
+        #return jsonify(result)
 
+    elif (file_type[1].lower() =="mp3" or file_type[1].lower() =="mp4"):
 
-			elif (file_type.lower() =="mp3" or file_type.lower() =="mp4") :
-				print("3")
-				apikey = 'mUFzo-xMwW8Ix-J1GSFreZ-gFMGEpvjafNLkAQN0WCoH'
-				url = 'https://api.us-south.speech-to-text.watson.cloud.ibm.com/instances/35437128-dcf1-4cc7-946c-c4d4b608ba4b'
-				authenticator = IAMAuthenticator(apikey)
-				stt = SpeechToTextV1(authenticator=authenticator)
-				stt.set_service_url(url)
-				print("Second time ",type(f1))
+        f1 = open(path, 'rb')
 
-				authenticator = IAMAuthenticator(apikey)
-				stt = SpeechToTextV1(authenticator=authenticator)
-				stt.set_service_url(url)
+        apikey = 'P4L2u2NeULGbw5DkEQELCXph4119eFNo9XXKa4ku4qVA'
+        url = 'https://api.au-syd.speech-to-text.watson.cloud.ibm.com/'
+        authenticator = IAMAuthenticator(apikey)
+        stt = SpeechToTextV1(authenticator=authenticator)
+        stt.set_service_url(url)
 
-				if file_type.lower() =="mp4":
-					transcript =""
-					with tempfile.TemporaryDirectory() as tmpdirname:
-						video = mp.VideoFileClip(f1.temporary_file_path())
-						video.audio.write_audiofile(str(tmpdirname) + '\\output.mp3')
-						with open(str(tmpdirname) + '\\output.mp3', 'rb') as fin:
-							res = stt.recognize(audio=fin, content_type='audio/mp3', model='en-AU_NarrowbandModel', continuous=True).get_result()
-							text = [result['alternatives'][0]['transcript'].rstrip() + '.\n' for result in res['results']]
-							text = [para[0].title() + para[1:] for para in text]
-							transcript = ''.join(text)
-							with open('output.txt', 'w') as out:
-							    out.writelines(transcript)
-							    print(transcript)
-							# print(transcript)
+        authenticator = IAMAuthenticator(apikey)
+        stt = SpeechToTextV1(authenticator=authenticator)
+        stt.set_service_url(url)
 
-							
-					print("rendering new page....")
-					return render(request,'pdfreader/results.html',model_reader(transcript))
+        if file_type[1].lower() == "mp4":
+            transcript = ""
+
+            video = mp.VideoFileClip(path)
+            video.audio.write_audiofile('output.mp3')
+            with open('output.mp3', 'rb') as fin:
+                res = stt.recognize(audio=fin, content_type='audio/mp3', model='en-AU_NarrowbandModel', inactivity_timeout=30).get_result()
+                text = [result['alternatives'][0]['transcript'].rstrip() + '.\n' for result in res['results']]
+                text = [para[0].title() + para[1:] for para in text]
+                transcript = ''.join(text)
+
+        result = model_reader(transcript)
 
 
-					# fp = tempfile.TemporaryFile()
-					# # print(f1.temporary_file_path())
-					
-					# f1 = video.audio
-					# fp.write(b(f1))
+        print(result)
+        return
 
-				# authenticator = IAMAuthenticator(apikey)
-				# stt = SpeechToTextV1(authenticator=authenticator)
-				# stt.set_service_url(url)
-				# with open("D:\\GITHUB\\rishabh9898\\hackathon-HipHack\\Backend\\App\\hiphack\\pdfreader\\nlp.mp3", 'rb') as f:
-				res = stt.recognize(audio=f1, content_type='audio/mp3', model='en-AU_NarrowbandModel', continuous=True).get_result()
-				text = [result['alternatives'][0]['transcript'].rstrip() + '.\n' for result in res['results']]
-				text = [para[0].title() + para[1:] for para in text]
-				transcript = ''.join(text)
-				with open('output.txt', 'w') as out:
-				    out.writelines(transcript)
-				# print(transcript)
+        #return jsonify(result)
 
-				
-				print("rendering new page....")
-				return render(request,'pdfreader/results.html',model_reader(transcript))
+    elif file_type[1].lower() == "pdf":
 
-			else :
-				return render(request,'pdfreader/404.html')
+        f1 = open(path, 'rb')
+
+        pdf = PyPDF2.PdfFileReader(f1)
+        num_pages = pdf.getNumPages()
+        text = ''
+        for i in range(num_pages):
+            page = pdf.getPage(i)
+            text = text + page.extractText()
+        text = preprocess(text)
+        name = "Refrences"
+        #ri = text.find(name)
+        #text = text[:ri]
+
+        print(text)
+
+        result = model_reader(text)
+
+        print(result['all_papers_details'][0]['url'])
+
+        #return jsonify(result)
 
 
-	form = CreateForm()
-	print(" rendering same page...")
-	return render(request,'pdfreader/search.html',{'form':form})
+    else:
+
+        return jsonify("Error"), 500
+
+
+
+print(machinelearning())
